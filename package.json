@@ -1,0 +1,16 @@
+{
+  "name": "zfcg-collector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "上海市政府采购网（政采云）信息采集原型 — M1",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "collect": "node src/index.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  }
+}
