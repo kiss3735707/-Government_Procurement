@@ -1,0 +1,20 @@
+# 依赖
+node_modules/
+
+# 采集输出（原始数据不入库，避免仓库膨胀与隐私）
+out/
+
+# 日志与临时文件
+*.log
+.DS_Store
+/tmp/
+
+# 环境与凭据（SMTP/DB 配置绝不入库）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+登录信息.txt
+登录信息*
+scripts/_ssh*.py
