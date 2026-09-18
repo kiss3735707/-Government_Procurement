@@ -29,3 +29,20 @@ export function databaseUrl() {
   loadEnv();
   return process.env.DATABASE_URL || '';
 }
+
+export function smtpConfig() {
+  loadEnv();
+  const port = Number(process.env.SMTP_PORT || 465);
+  return {
+    host: process.env.SMTP_HOST || '',
+    port,
+    secure: port === 465,
+    requireTLS: port === 587,
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    fromName: process.env.SMTP_FROM_NAME || '政采信息',
+    fromEmail: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+    adminEmail: process.env.DIGEST_ADMIN_EMAIL || process.env.SMTP_USER || '',
+    toOverride: process.env.DIGEST_TO || '',
+  };
+}

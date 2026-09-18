@@ -15,9 +15,9 @@
 
 | 项 | 状态 |
 |---|---|
-| 当前阶段 | **M3（标签与分析底座）** — ✅ 用户验收通过（2026-09-18） |
-| 阻塞项 | 下一步 M4 缺销售清单 CSV、SMTP；M2 全量日采集未跑（已知问题） |
-| 最近验证 | 用户手测通过：search 长宁区、summary 2026-09-17、`npm test` 全绿。`{test_cmd}` = `npm test` → **23/23**（exit 0） |
+| 当前阶段 | **M4（日报与邮件）** — ✅ 用户验收通过（2026-09-18） |
+| 阻塞项 | 下一步 M5 清单自维护；M2 全量日采集未跑（已知问题）；应用进程尚未部署到信创机 |
+| 最近验证 | `{test_cmd}` = `npm test` → **31/31**；用户确认全市日报收件无误 |
 
 ## 3. 阶段总览
 
@@ -26,7 +26,7 @@
 | M1 | 数据源打通 + 采集原型 | ✅ 完成 | 列表/详情/正文解析跑通；抽样 15 条字段校准 ≥99%；全量日采集验证 |
 | M2 | 建库入库 | ✅ 抽检关闭 | 7 表+视图；幂等 upsert；detail_status。用户 2026-09-18 要求进入下一步。**已知问题：全量约 224 条日采集未跑** |
 | M3 | 标签与分析底座 | ✅ 完成 | 自动标签落库；`v_daily_summary` + `v_by_district_type`；`src/query.js` JSON 查询。用户 2026-09-18 手测确认 |
-| M4 | 日报与邮件 | ⬜ 未开始 | 区域匹配；日报生成；SMTP 发送；防重发 |
+| M4 | 日报与邮件 | ✅ 完成 | 区域匹配；日报生成；SMTP；防重发。用户 2026-09-18 确认全市日报收件无误 |
 | M5 | 清单自维护 | ⬜ 未开始 | 管理界面：区域-销售增删、CSV 导入导出、人工标签 |
 | M6 | 部署上线 | ⬜ 未开始 | systemd 定时；监控告警；备份；试运行 1 周 |
 
@@ -37,16 +37,26 @@
 - 字段校准：区划/采购人 15/15；意向明细 8/8；招标预算/开标/资金 5/5；中标金额+供应商 ✅
 - 详细结论：`docs/M1采集原型-校准结论.md`
 
-## 5. M3 任务清单
+## 5. M4 任务清单
 
-- [x] 自动标签写入 `announcements.tags`（含 district / amount_band / has_attachment / 上海时区 year_month）
-- [x] 聚合视图：`v_daily_summary`、`v_by_district_type`
-- [x] 查询接口：`node src/query.js search|summary|by-district|unassigned`（JSON）
-- [x] **用户验收**：2026-09-18 用户确认 search / summary / npm test 均通过
+- [x] 导入区域-销售清单（赵海东 / 嘉定区 → `sales_regions`）
+- [x] 区划归一化后匹配；未匹配进待分配池
+- [x] 生成三类日报正文；空区域不发
+- [x] `daily_digests` 防重发（sent 不重发）
+- [x] SMTP 实发成功（2026-09-17 全市 → `635690160@qq.com` sent）
+- [x] **用户验收**：2026-09-18 用户确认全市日报收件无误
 
-### 下一步：M4 日报与邮件（未开始）
+`.env` 与销售 CSV 不入库。同一天 `region=全市` 已 sent 后 `--send` 会跳过。
 
-缺两样才能开工：区域-销售清单 CSV、公司 SMTP。有了说一声即可。
+```
+node src/digest.js import-sales data/sales_regions.csv
+node src/digest.js run --date 2026-09-17
+node src/digest.js run --date 2026-09-17 --send
+```
+
+### 下一步：M5 清单自维护（未开始）
+
+管理界面：区域-销售增删、CSV 导入导出、人工标签。
 
 ## 6. 运行与验证
 
@@ -56,16 +66,17 @@ node src/db/migrate.js
 node src/index.js --date YYYY-MM-DD --limit 2
 node src/query.js search --district 长宁区
 node src/query.js summary --from 2026-09-17 --to 2026-09-17
+node src/digest.js run --date 2026-09-17
 ```
 
 DATABASE_URL 只放 `.env`（gitignore）。库在 `10.12.64.101:5432`，库名/用户 `zfcg`。
 
-## 7. 待用户提供（阻塞 M4 / M6 定时部署）
+## 7. 待用户提供（阻塞 M6 定时部署）
 
 | 项 | 用途 | 状态 |
 |---|---|---|
-| 区域-销售清单 CSV（姓名+邮箱+区域） | 日报区域匹配 | 未提供 |
-| 公司 SMTP 配置（主机/端口/账号/发件人） | 邮件发送 | 未提供 |
+| 区域-销售清单 CSV（姓名+邮箱+区域） | 日报区域匹配 | **已导入** 赵海东 / 嘉定区 |
+| 公司 SMTP 配置（主机/端口/账号/发件人） | 邮件发送 | **已填 .env**；全市日报实发 sent |
 | 信创服务器 | 部署采集定时任务 | **已有** `10.12.64.101`（Ubuntu 24.04 + PostgreSQL 16.15）；应用进程尚未部署到该机 |
 
 ## 8. 已确认决策（详见 `docs/决策日志.md`）
@@ -75,6 +86,7 @@ DATABASE_URL 只放 `.env`（gitignore）。库在 `10.12.64.101:5432`，库名/
 - 意向明细拆表；标签双通道；日期客户端强制过滤
 - jsonb 入库统一 `JSON.stringify` + `::jsonb`（ADR-011）
 - M3 查询走 CLI JSON，HTTP 管理界面放到 M5（ADR-012）
+- M4：空区域不发；管理员收全市（ADR-014）；SMTP 465 SSL
 
 ## 9. 文件索引（读文件顺序）
 
