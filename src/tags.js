@@ -48,11 +48,15 @@ export function buildTags(ctx) {
     if (parsed.suppliers?.length) tags.supplier = parsed.suppliers.join(',');
   }
 
+  const attachments =
+    detail?.attachmentDtoList || detail?.fileList || detail?.attachments || [];
+  tags.has_attachment = Array.isArray(attachments) && attachments.length > 0;
+
   return tags;
 }
 
 function monthOf(ts) {
   if (!ts) return null;
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const ymd = new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
+  return ymd.slice(0, 7);
 }

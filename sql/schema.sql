@@ -145,6 +145,16 @@ SELECT
 FROM announcements
 GROUP BY 1, 2, 3, 4, 5;
 
+-- 标签驱动：区划 × 类型 计数（M3 分析底座）
+CREATE OR REPLACE VIEW v_by_district_type AS
+SELECT
+  tags->>'district' AS district,
+  tags->>'type' AS type,
+  tags->>'amount_band' AS amount_band,
+  count(*) AS cnt
+FROM announcements
+GROUP BY 1, 2, 3;
+
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN

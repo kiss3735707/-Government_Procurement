@@ -2,7 +2,7 @@
   "name": "zfcg-collector",
   "version": "0.2.0",
   "private": true,
-  "description": "上海市政府采购网（政采云）信息采集与入库 — M2",
+  "description": "上海市政府采购网（政采云）信息采集、入库与标签查询 — M3",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -10,7 +10,8 @@
   "scripts": {
     "collect": "node src/index.js",
     "migrate": "node src/db/migrate.js",
-    "test": "node --test test/window.test.js test/status.test.js test/map.test.js test/store.sql.test.js test/store.integration.test.js"
+    "test": "node --test --test-concurrency=1 test/window.test.js test/status.test.js test/map.test.js test/store.sql.test.js test/store.integration.test.js test/tags.test.js test/query.sql.test.js test/query.integration.test.js",
+    "query": "node src/query.js"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

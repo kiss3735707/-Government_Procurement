@@ -44,8 +44,12 @@ describe('db integration', { skip: !enabled }, () => {
       'sales_regions',
     ]]);
     assert.equal(tables.rowCount, 7);
-    const views = await pool.query(`SELECT viewname FROM pg_views WHERE schemaname = 'public' AND viewname = 'v_daily_summary'`);
-    assert.equal(views.rowCount, 1);
+    const views = await pool.query(`
+      SELECT viewname FROM pg_views
+      WHERE schemaname = 'public'
+        AND viewname = ANY($1)
+    `, [['v_daily_summary', 'v_by_district_type']]);
+    assert.equal(views.rowCount, 2);
   });
 
   it('second insert of the same article is a no-op', async () => {
