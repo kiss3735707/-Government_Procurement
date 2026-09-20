@@ -1,0 +1,10 @@
+[Unit]
+Description=zfcg collect daily at 17:00 Asia/Shanghai
+
+[Timer]
+OnCalendar=*-*-* 17:00:00
+Persistent=true
+Unit=zfcg-collect.service
+
+[Install]
+WantedBy=timers.target

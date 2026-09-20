@@ -1,0 +1,10 @@
+[Unit]
+Description=zfcg backup daily at 02:00 Asia/Shanghai
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=zfcg-backup.service
+
+[Install]
+WantedBy=timers.target

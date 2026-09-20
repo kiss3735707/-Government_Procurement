@@ -1,0 +1,11 @@
+[Unit]
+Description=zfcg PostgreSQL dump
+After=postgresql.service
+OnFailure=zfcg-notify@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/zfcg
+EnvironmentFile=-/opt/zfcg/.env
+ExecStart=/usr/local/sbin/zfcg-backup
+Nice=10

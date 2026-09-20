@@ -1,0 +1,14 @@
+[Unit]
+Description=zfcg daily digest email
+After=network-online.target postgresql.service
+Wants=network-online.target
+OnFailure=zfcg-notify@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/zfcg
+EnvironmentFile=-/opt/zfcg/.env
+Environment=PATH=/usr/local/bin:/usr/bin
+ExecStart=/usr/bin/env node /opt/zfcg/src/digest.js run --send
+TimeoutStartSec=600
+Nice=10

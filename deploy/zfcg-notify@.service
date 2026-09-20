@@ -1,0 +1,9 @@
+[Unit]
+Description=zfcg mail notify for failed unit %i
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/zfcg
+EnvironmentFile=-/opt/zfcg/.env
+Environment=PATH=/usr/local/bin:/usr/bin
+ExecStart=/usr/bin/env node /opt/zfcg/src/ops/notify-fail.js %i

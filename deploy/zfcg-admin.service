@@ -1,0 +1,17 @@
+[Unit]
+Description=zfcg admin web
+After=network-online.target postgresql.service
+Wants=network-online.target
+OnFailure=zfcg-notify@%n.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/zfcg
+EnvironmentFile=-/opt/zfcg/.env
+Environment=PATH=/usr/local/bin:/usr/bin
+ExecStart=/usr/bin/env node /opt/zfcg/src/admin.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

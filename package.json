@@ -10,7 +10,7 @@
   "scripts": {
     "collect": "node src/index.js",
     "migrate": "node src/db/migrate.js",
-    "test": "node --test --test-concurrency=1 test/window.test.js test/status.test.js test/map.test.js test/store.sql.test.js test/store.integration.test.js test/tags.test.js test/query.sql.test.js test/query.integration.test.js test/digest.match.test.js test/digest.render.test.js test/digest.csv.test.js test/digest.jobs.test.js test/admin.validate.test.js test/admin.http.test.js test/admin.integration.test.js",
+    "test": "node --test --test-concurrency=1 test/window.test.js test/status.test.js test/map.test.js test/store.sql.test.js test/store.integration.test.js test/tags.test.js test/query.sql.test.js test/query.integration.test.js test/digest.match.test.js test/digest.render.test.js test/digest.csv.test.js test/digest.jobs.test.js test/admin.validate.test.js test/admin.http.test.js test/admin.integration.test.js test/deploy.units.test.js",
     "query": "node src/query.js",
     "digest": "node src/digest.js",
     "admin": "node src/admin.js"
