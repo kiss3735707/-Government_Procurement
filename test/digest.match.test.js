@@ -28,6 +28,16 @@ describe('assignAnnouncements', () => {
     assert.equal(unassigned.length, 1);
     assert.equal(unassigned[0].title, '长宁意向');
   });
+
+  it('does not treat 全市 as a real district owner', () => {
+    const { bundles, unassigned } = assignAnnouncements(
+      [{ title: '长宁意向', type: 'intention', district_name: '长宁区' }],
+      [{ sales_name: '赵海东', sales_email: 'a@qq.com', region: '全市', is_active: true }]
+    );
+    assert.equal(unassigned.length, 1);
+    const zhao = bundles.find((b) => b.sales_email === 'a@qq.com');
+    assert.equal(zhao.items.length, 0);
+  });
 });
 
 describe('countByType', () => {

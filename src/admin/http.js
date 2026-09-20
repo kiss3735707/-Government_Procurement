@@ -20,7 +20,7 @@ import { addTag, removeTag } from './tagRepo.js';
 import { getAnnouncement, searchAnnouncementsAdmin } from './announceRepo.js';
 import { announcementsPage, loginPage, salesPage } from './ui.js';
 import { SALES_CSV_TEMPLATE } from '../digest/csv.js';
-import { STANDARD_NAMES } from '../normalize/district.js';
+import { SALES_REGION_OPTIONS } from './validate.js';
 
 const MAX_BODY = 2 * 1024 * 1024;
 
@@ -104,7 +104,7 @@ export async function handleAdmin(req, res, deps) {
 
 async function handleApi(req, res, { pool, user, url, path, method }) {
   if (path === '/api/meta/districts' && method === 'GET') {
-    return sendJson(res, 200, { rows: STANDARD_NAMES });
+    return sendJson(res, 200, { rows: SALES_REGION_OPTIONS });
   }
   if (path === '/api/sales' && method === 'GET') {
     const rows = await listSales(pool, { activeOnly: url.searchParams.get('active') === '1' });

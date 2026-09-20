@@ -36,6 +36,7 @@ export function assignAnnouncements(announcements, salesRows) {
   for (const s of active) {
     const region = standardRegion(s.region);
     if (!region || !s.sales_email) continue;
+    if (isCitywideRegion(region)) continue;
     if (!regionOwners.has(region)) regionOwners.set(region, []);
     regionOwners.get(region).push(s);
   }
@@ -75,3 +76,21 @@ export function countByType(items) {
 
 export const UNASSIGNED_REGION = '待分配';
 export const CITYWIDE_REGION = '全市';
+
+export function isCitywideRegion(raw) {
+  return String(raw || '').trim() === CITYWIDE_REGION;
+}
+
+/** 启用中、挂了全市的销售（按邮箱去重） */
+export function citywideRecipients(salesRows) {
+  const map = new Map();
+  for (const s of salesRows || []) {
+    if (s.is_active === false) continue;
+    if (!isCitywideRegion(s.region)) continue;
+    const email = String(s.sales_email || '').trim();
+    if (!email) continue;
+    const key = email.toLowerCase();
+    if (!map.has(key)) map.set(key, { sales_email: email, sales_name: s.sales_name || '管理员' });
+  }
+  return [...map.values()];
+}

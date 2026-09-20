@@ -1,4 +1,4 @@
-import { STANDARD_NAMES } from '../normalize/district.js';
+import { SALES_REGION_OPTIONS } from './validate.js';
 
 function escAttr(s) {
   return String(s ?? '')
@@ -7,7 +7,7 @@ function escAttr(s) {
     .replace(/</g, '&lt;');
 }
 
-const DISTRICT_OPTIONS = STANDARD_NAMES.map(
+const DISTRICT_OPTIONS = SALES_REGION_OPTIONS.map(
   (n) => `<option value="${escAttr(n)}">${escAttr(n)}</option>`
 ).join('');
 
@@ -135,6 +135,7 @@ export function salesPage(user) {
           <div><label>备注</label><input name="note"></div>
           <div><label>启用</label><select name="is_active"><option value="true">是</option><option value="false">否</option></select></div>
         </div>
+        <p class="muted">选「全市」则该邮箱收当天全部意向/招标/中标，不再另发其区县日报。</p>
         <p style="margin-top:12px"><button type="submit">保存</button> <button type="button" class="secondary" id="resetBtn">清空</button></p>
       </form>
     </div>

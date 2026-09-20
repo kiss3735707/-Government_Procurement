@@ -16,8 +16,9 @@ describe('admin session', () => {
 describe('validateSalesRow', () => {
   it('rejects invalid email and unknown district', () => {
     assert.equal(validateSalesRow({ sales_name: '张三', sales_email: 'bad', region: '浦东新区' }).error, '邮箱格式无效');
-    assert.equal(validateSalesRow({ sales_name: '张三', sales_email: 'a@b.com', region: '火星区' }).error, '区域须为标准区名（16区+本级）');
+    assert.equal(validateSalesRow({ sales_name: '张三', sales_email: 'a@b.com', region: '火星区' }).error, '区域须为标准区名（16区+本级）或全市');
     assert.equal(validateSalesRow({ sales_name: '张三', sales_email: 'A@B.com', region: '上海市浦东新区' }).row.region, '浦东新区');
+    assert.equal(validateSalesRow({ sales_name: '张三', sales_email: 'a@b.com', region: '全市' }).row.region, '全市');
   });
 });
 

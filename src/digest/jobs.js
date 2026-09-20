@@ -1,16 +1,44 @@
 /**
  * 组装一日日报：匹配 → 渲染。不发信、不写库。
  */
-import { assignAnnouncements, CITYWIDE_REGION, countByType, UNASSIGNED_REGION } from './match.js';
+import { assignAnnouncements, citywideRecipients, CITYWIDE_REGION, countByType, UNASSIGNED_REGION } from './match.js';
 import { renderDigest } from './render.js';
+
+function citywideJob({ date, to, name, announcements }) {
+  const counts = countByType(announcements);
+  return {
+    kind: 'citywide',
+    report_date: date,
+    to,
+    sales_name: name,
+    region: CITYWIDE_REGION,
+    regions: [CITYWIDE_REGION],
+    items: announcements,
+    ...counts,
+    skipEmpty: false,
+    mail: renderDigest({
+      date,
+      name,
+      regions: [CITYWIDE_REGION],
+      items: announcements,
+      citywide: true,
+    }),
+  };
+}
 
 export function buildDigestJobs({ date, announcements, salesRows, adminEmail }) {
   const { bundles } = assignAnnouncements(announcements, salesRows);
+  const recipients = citywideRecipients(salesRows);
+  const citywideSet = new Set(recipients.map((r) => r.sales_email.trim().toLowerCase()));
+  const admin = (adminEmail || '').trim();
+  const adminKey = admin.toLowerCase();
+  const useFallbackAdmin = recipients.length === 0 && Boolean(admin);
   const jobs = [];
-  const admin = (adminEmail || '').trim().toLowerCase();
 
   for (const b of bundles) {
-    if (admin && b.sales_email.trim().toLowerCase() === admin) continue;
+    const key = b.sales_email.trim().toLowerCase();
+    if (citywideSet.has(key)) continue;
+    if (useFallbackAdmin && key === adminKey) continue;
     const counts = countByType(b.items);
     jobs.push({
       kind: 'sales',
@@ -26,26 +54,14 @@ export function buildDigestJobs({ date, announcements, salesRows, adminEmail }) 
     });
   }
 
-  if (admin && (announcements || []).length) {
-    const counts = countByType(announcements);
-    jobs.push({
-      kind: 'citywide',
-      report_date: date,
-      to: adminEmail,
-      sales_name: '管理员',
-      region: CITYWIDE_REGION,
-      regions: [CITYWIDE_REGION],
-      items: announcements,
-      ...counts,
-      skipEmpty: false,
-      mail: renderDigest({
-        date,
-        name: '管理员',
-        regions: [CITYWIDE_REGION],
-        items: announcements,
-        citywide: true,
-      }),
-    });
+  if (!(announcements || []).length) return jobs;
+
+  if (recipients.length) {
+    for (const r of recipients) {
+      jobs.push(citywideJob({ date, to: r.sales_email, name: r.sales_name, announcements }));
+    }
+  } else if (useFallbackAdmin) {
+    jobs.push(citywideJob({ date, to: admin, name: '管理员', announcements }));
   }
   return jobs;
 }

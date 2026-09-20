@@ -1,12 +1,15 @@
 import { DISTRICT_CODES, normalizeDistrict, STANDARD_NAMES } from '../normalize/district.js';
+import { CITYWIDE_REGION } from '../digest/match.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TAG_KEYS = ['product_line', 'customer_stage', 'priority', 'custom'];
+export const SALES_REGION_OPTIONS = [CITYWIDE_REGION, ...STANDARD_NAMES];
 
 export function validateSalesRow(input) {
   const sales_name = String(input.sales_name || '').trim();
   const sales_email = String(input.sales_email || '').trim().toLowerCase();
-  const region = normalizeDistrict(input.region);
+  const rawRegion = String(input.region || '').trim();
+  const region = rawRegion === CITYWIDE_REGION ? CITYWIDE_REGION : normalizeDistrict(rawRegion);
   const note =
     input.note == null || String(input.note).trim() === '' ? null : String(input.note).trim();
   const is_active = !['0', 'false', 'no', 'n', false, 0].includes(
@@ -14,7 +17,7 @@ export function validateSalesRow(input) {
   );
   if (!sales_name) return { error: '姓名必填' };
   if (!EMAIL_RE.test(sales_email)) return { error: '邮箱格式无效' };
-  if (!region) return { error: '区域须为标准区名（16区+本级）' };
+  if (!region) return { error: '区域须为标准区名（16区+本级）或全市' };
   return {
     row: {
       sales_name,

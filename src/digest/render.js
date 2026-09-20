@@ -45,7 +45,7 @@ function listAward(items) {
 
 export function renderDigest({ date, name, regions, items, unassigned = false, citywide = false }) {
   const who = citywide
-    ? '管理员（全市）'
+    ? `${name}（全市）`
     : unassigned
       ? '待分配池（管理员）'
       : `${name}（${(regions || []).join('、')}）`;

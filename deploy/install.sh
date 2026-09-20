@@ -21,6 +21,7 @@ install -m 644 "$APP/deploy/zfcg-backup.timer" /etc/systemd/system/
 install -m 644 "$APP/deploy/zfcg-notify@.service" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now zfcg-admin.service
+systemctl restart zfcg-admin.service
 systemctl enable --now zfcg-collect.timer zfcg-digest.timer zfcg-backup.timer
 if command -v ufw >/dev/null; then
   ufw status | grep -q inactive || ufw allow 8080/tcp || true
