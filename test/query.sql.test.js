@@ -23,6 +23,8 @@ describe('buildSearchQuery', () => {
     assert.equal(params[0], JSON.stringify({ district: '长宁区', type: 'intention' }));
     assert.equal(params[1], '2026-09-17');
     assert.equal(params[2], 10);
+    assert.equal(params[3], 0);
+    assert.match(sql, /OFFSET/);
   });
 });
 

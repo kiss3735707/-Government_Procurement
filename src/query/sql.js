@@ -29,15 +29,31 @@ export function buildSearchQuery(filters = {}) {
     params.push(filters.to);
     where.push(`(publish_time AT TIME ZONE 'Asia/Shanghai')::date <= $${params.length}::date`);
   }
+  if (filters.keyword) {
+    params.push(`%${filters.keyword}%`);
+    where.push(
+      `(title ILIKE $${params.length} OR COALESCE(purchaser,'') ILIKE $${params.length} OR COALESCE(project_name,'') ILIKE $${params.length})`
+    );
+  }
+  if (filters.purchaser) {
+    params.push(`%${filters.purchaser}%`);
+    where.push(`COALESCE(purchaser,'') ILIKE $${params.length}`);
+  }
+  if (filters.projectCode) {
+    params.push(filters.projectCode);
+    where.push(`project_code = $${params.length}`);
+  }
   const limit = Number(filters.limit) > 0 ? Number(filters.limit) : 50;
+  const offset = Number(filters.offset) >= 0 ? Number(filters.offset) : 0;
   params.push(limit);
+  params.push(offset);
   const sql = `
 SELECT id, article_id, type, type_detail, title, district_name, purchaser,
        budget_amount, award_amount, tags, publish_time
 FROM announcements
 ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
 ORDER BY publish_time DESC
-LIMIT $${params.length}
+LIMIT $${params.length - 1} OFFSET $${params.length}
 `.trim();
   return { sql, params };
 }
