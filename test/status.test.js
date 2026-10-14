@@ -17,9 +17,11 @@ describe('nextDetailStatus', () => {
 });
 
 describe('shouldFetchDetail', () => {
-  it('retries pending and failed, skips done', () => {
+  it('retries pending and failed, skips done and backfill statuses', () => {
     assert.equal(shouldFetchDetail('pending'), true);
     assert.equal(shouldFetchDetail('failed'), true);
     assert.equal(shouldFetchDetail('done'), false);
+    assert.equal(shouldFetchDetail('backfill_pending'), false);
+    assert.equal(shouldFetchDetail('backfill_failed'), false);
   });
 });

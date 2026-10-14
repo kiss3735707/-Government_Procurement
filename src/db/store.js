@@ -3,7 +3,7 @@
  */
 import { SITE } from '../config.js';
 import { getPool } from './pool.js';
-import { RETRY_STATUSES } from './status.js';
+import { DETAIL_FAILED, RETRY_STATUSES } from './status.js';
 import { asJsonb, nextProjectStage } from './map.js';
 
 export const INSERT_ANNOUNCEMENT_SQL = `
@@ -89,11 +89,11 @@ export async function updateAnnouncementDetail(id, patch, status, client = getPo
   );
 }
 
-export async function markDetailFailed(id, rawJson, client = getPool()) {
+export async function markDetailFailed(id, rawJson, client = getPool(), status = DETAIL_FAILED) {
   await client.query(
-    `UPDATE announcements SET detail_status = 'failed', raw_json = COALESCE($2, raw_json)
+    `UPDATE announcements SET detail_status = $3, raw_json = COALESCE($2, raw_json)
      WHERE id = $1`,
-    [id, rawJson == null ? null : JSON.stringify(asJsonb(rawJson))]
+    [id, rawJson == null ? null : JSON.stringify(asJsonb(rawJson)), status]
   );
 }
 

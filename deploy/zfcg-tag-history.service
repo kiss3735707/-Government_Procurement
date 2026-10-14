@@ -1,0 +1,13 @@
+[Unit]
+Description=ZFCG historical award tagging
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/zfcg
+ExecStart=/bin/bash /opt/zfcg/deploy/tag-history.sh
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -17,6 +17,7 @@ out/
 *.key
 登录信息.txt
 登录信息*
+ocn网关配置导出*.md
 scripts/_ssh*.py
 data/*.csv
 !data/sales_regions.example.csv

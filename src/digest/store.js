@@ -1,6 +1,34 @@
 import { DISTRICT_CODES } from '../normalize/district.js';
+import { previousShanghaiDay } from '../window.js';
 import { getPool } from '../db/pool.js';
 import { standardRegion, UNASSIGNED_REGION } from './match.js';
+
+const ANNOUNCEMENT_COLUMNS = `
+SELECT a.id, a.article_id, a.type, a.type_detail, a.title, a.purchaser,
+       a.district_name, a.project_code, a.bid_open_time, a.budget_amount,
+       a.award_amount, a.supplier, a.tags, a.publish_time,
+       COALESCE(
+         (SELECT json_agg(json_build_object(
+            'item_name', i.item_name,
+            'budget_amount', i.budget_amount,
+            'expect_month', i.expect_month
+          ) ORDER BY i.seq_no NULLS LAST, i.id)
+          FROM intention_items i WHERE i.announcement_id = a.id),
+         '[]'::json
+       ) AS items
+FROM announcements a`;
+
+const ANNOUNCEMENT_SELECT = `
+${ANNOUNCEMENT_COLUMNS}
+WHERE (a.publish_time AT TIME ZONE 'Asia/Shanghai')::date = $1::date
+ORDER BY a.type, a.publish_time`;
+
+function mapAnnouncementRows(rows) {
+  return rows.map((r) => ({
+    ...r,
+    items: Array.isArray(r.items) ? r.items : [],
+  }));
+}
 
 export async function importSalesRows(rows, client = getPool()) {
   let n = 0;
@@ -30,28 +58,24 @@ export async function loadActiveSales(client = getPool()) {
 }
 
 export async function loadAnnouncementsForDay(date, client = getPool()) {
+  const res = await client.query(ANNOUNCEMENT_SELECT, [date]);
+  return mapAnnouncementRows(res.rows);
+}
+
+/** 昨日已发日报之后才入库的公告，用于次日邮件「昨日补入」。 */
+export async function loadCatchupAnnouncements(date, client = getPool()) {
+  const yesterday = previousShanghaiDay(date);
   const res = await client.query(
-    `SELECT a.id, a.article_id, a.type, a.type_detail, a.title, a.purchaser,
-            a.district_name, a.project_code, a.bid_open_time, a.budget_amount,
-            a.award_amount, a.supplier, a.tags, a.publish_time,
-            COALESCE(
-              (SELECT json_agg(json_build_object(
-                 'item_name', i.item_name,
-                 'budget_amount', i.budget_amount,
-                 'expect_month', i.expect_month
-               ) ORDER BY i.seq_no NULLS LAST, i.id)
-               FROM intention_items i WHERE i.announcement_id = a.id),
-              '[]'::json
-            ) AS items
-     FROM announcements a
+    `${ANNOUNCEMENT_COLUMNS}
      WHERE (a.publish_time AT TIME ZONE 'Asia/Shanghai')::date = $1::date
+       AND a.created_at > (
+         SELECT max(sent_at) FROM daily_digests
+         WHERE report_date = $1::date AND status = 'sent' AND sent_at IS NOT NULL
+       )
      ORDER BY a.type, a.publish_time`,
-    [date]
+    [yesterday]
   );
-  return res.rows.map((r) => ({
-    ...r,
-    items: Array.isArray(r.items) ? r.items : [],
-  }));
+  return mapAnnouncementRows(res.rows);
 }
 
 export async function claimDigest(row, client = getPool()) {

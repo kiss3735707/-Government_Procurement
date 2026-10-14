@@ -3,8 +3,8 @@
  * 采集 CLI：
  *   node src/index.js --migrate
  *   node src/index.js --date 2026-08-14 --limit 2
- *   --date    采集哪一天（默认上海时区今天）
- *   --limit   每类最多抓 N 条（默认 0 = 全量当天）
+   *   --date    只采集这一天（手工补采）。省略时先采昨天再采今天
+   *   --limit   每类最多抓 N 条（默认 0 = 全量当天）
  *   --no-save 不落盘 JSON
  *   --no-db   不入库（仅 JSON，DATABASE_URL 存在时默认入库）
  */
@@ -43,7 +43,7 @@ try {
       console.warn('未设置 DATABASE_URL，本次只落盘 JSON、不入库。');
     }
     console.log(
-      `M2 采集启动：date=${opts.date ?? '今天(上海)'} limit=${opts.limit || '全量'} db=${useDb ? 'on' : 'off'}`
+      `M2 采集启动：dates=${opts.date ?? '昨天+今天'} limit=${opts.limit || '全量'} db=${useDb ? 'on' : 'off'}`
     );
     const result = await runCollect({ date: opts.date, limit: opts.limit, db: useDb });
     if (opts.save) {

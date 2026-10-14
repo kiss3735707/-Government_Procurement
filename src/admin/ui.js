@@ -67,6 +67,7 @@ function nav(active, user) {
   <strong>政府采购提醒</strong>
   ${item('/sales', 'sales', '销售管理')}
   ${item('/announcements', 'announcements', '公告数据')}
+  ${item('/llm', 'llm', '模型配置')}
   <span class="sp"></span>
   <span class="muted">${escAttr(user || '')}</span>
   <a href="#" onclick="fetch('/api/logout',{method:'POST'}).then(()=>location.href='/login');return false">退出</a>
@@ -285,15 +286,84 @@ async function openDetail(id) {
       try { await api('/api/announcements/' + id + '/tags', { method:'POST', body: JSON.stringify(body) }); openDetail(id); }
       catch (err) { showMsg('msg', err.message, false); }
     };
-    document.getElementById('tags').onclick = async (ev) => {
-      const rm = ev.target.getAttribute('data-rm'); if (!rm) return;
-      ev.preventDefault();
-      try { await api('/api/announcements/' + id + '/tags/' + rm, { method:'DELETE' }); openDetail(id); }
-      catch (err) { showMsg('msg', err.message, false); }
-    };
   } catch (err) { showMsg('msg', err.message, false); }
 }
 load().catch(e => showMsg('msg', e.message, false));
+`
+  );
+}
+
+export function llmPage(user) {
+  return shell(
+    '模型配置',
+    nav('llm', user),
+    `<div class="card">
+      <h1>模型配置</h1>
+      <p class="muted">只保存网关连接，不会给公告打标签。密钥只显示末四位。</p>
+      <form id="llmForm">
+        <label>网关地址</label>
+        <input name="baseUrl" id="baseUrl" required placeholder="http://host:8002/v1">
+        <label>api_key</label>
+        <input name="apiKey" id="apiKey" type="password" autocomplete="off" placeholder="留空表示不修改已保存的密钥">
+        <label>模型名</label>
+        <input name="model" id="model" required>
+        <label>思考</label>
+        <select name="reasoning" id="reasoning">
+          <option value="off">关闭</option>
+          <option value="on">开启</option>
+        </select>
+        <p class="toolbar">
+          <button type="submit">保存</button>
+          <button type="button" class="secondary" id="testBtn">测试连接</button>
+        </p>
+      </form>
+      <p id="msg"></p>
+    </div>`,
+    `
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    credentials: 'same-origin',
+    headers: Object.assign({'content-type':'application/json'}, opts.headers || {}),
+    ...opts,
+  });
+  if (r.status === 401) { location.href = '/login'; throw new Error('未登录'); }
+  const ct = r.headers.get('content-type') || '';
+  const data = ct.includes('json') ? await r.json() : await r.text();
+  if (!r.ok) throw new Error((data && data.error) || r.statusText || String(r.status));
+  return data;
+}
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.className = ok ? 'ok' : 'err';
+  el.textContent = text || '';
+}
+async function load() {
+  const s = await api('/api/llm/settings');
+  document.getElementById('baseUrl').value = s.baseUrl || '';
+  document.getElementById('model').value = s.model || '';
+  document.getElementById('reasoning').value = s.reasoning === 'on' ? 'on' : 'off';
+  document.getElementById('apiKey').value = '';
+  document.getElementById('apiKey').placeholder = s.hasKey ? ('已保存 ' + s.apiKeyMask + '，留空则不修改') : '填写 api_key';
+}
+function formBody() {
+  return Object.fromEntries(new FormData(document.getElementById('llmForm')).entries());
+}
+document.getElementById('llmForm').onsubmit = async (ev) => {
+  ev.preventDefault();
+  try {
+    const s = await api('/api/llm/settings', { method: 'PUT', body: JSON.stringify(formBody()) });
+    showMsg('msg', s.hasKey ? ('已保存，密钥 ' + s.apiKeyMask) : '已保存，尚未填写密钥', true);
+    document.getElementById('apiKey').value = '';
+    document.getElementById('apiKey').placeholder = s.hasKey ? ('已保存 ' + s.apiKeyMask + '，留空则不修改') : '填写 api_key';
+  } catch (err) { showMsg('msg', err.message, false); }
+};
+document.getElementById('testBtn').onclick = async () => {
+  try {
+    const out = await api('/api/llm/test', { method: 'POST', body: JSON.stringify(formBody()) });
+    showMsg('msg', out.message, !!out.ok);
+  } catch (err) { showMsg('msg', err.message, false); }
+};
+load().catch((e) => showMsg('msg', e.message, false));
 `
   );
 }

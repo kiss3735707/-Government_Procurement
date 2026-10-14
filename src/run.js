@@ -11,7 +11,7 @@ import { parseBidding } from './parse/bidding.js';
 import { parseAward } from './parse/award.js';
 import { buildTags } from './tags.js';
 import { normalizeDistrict } from './normalize/district.js';
-import { shanghaiDayBounds, todayShanghai } from './window.js';
+import { shanghaiDayBounds, resolveCollectDates } from './window.js';
 import { mapDetailPatch, mapListRow } from './db/map.js';
 import { nextDetailStatus, shouldFetchDetail } from './db/status.js';
 import {
@@ -209,39 +209,42 @@ async function collectCategory(cat, { date, limit, db }) {
 
 /**
  * @param {object} opts { date, limit, db }
+ * date 省略时采集昨天和今天；传入 date 时只采该日。
  */
 export async function runCollect(opts = {}) {
-  const date = opts.date ?? todayShanghai();
+  const dates = resolveCollectDates({ date: opts.date });
   const db = Boolean(opts.db);
   const results = [];
-  for (const cat of CATEGORIES) {
-    console.log(`\n=== ${cat.name} (${cat.code}) @ ${date} ===`);
-    let runId = null;
-    if (db) runId = await startCollectRun({ runDate: date, category: cat.code });
-    try {
-      const stats = await collectCategory(cat, { date, limit: opts.limit, db });
-      results.push(stats);
-      console.log(
-        `total=${stats.total} fetched=${stats.fetched} inserted=${stats.inserted} details=${stats.details} output=${stats.items.length}`
-      );
-      if (db && runId) {
-        await finishCollectRun(runId, {
-          page_count: stats.pageCount,
-          fetched_cnt: stats.fetched,
-          inserted_cnt: stats.inserted,
-          detail_ok_cnt: stats.detailOk,
-          status: 'success',
-        });
+  for (const date of dates) {
+    for (const cat of CATEGORIES) {
+      console.log(`\n=== ${cat.name} (${cat.code}) @ ${date} ===`);
+      let runId = null;
+      if (db) runId = await startCollectRun({ runDate: date, category: cat.code });
+      try {
+        const stats = await collectCategory(cat, { date, limit: opts.limit, db });
+        results.push({ ...stats, date });
+        console.log(
+          `total=${stats.total} fetched=${stats.fetched} inserted=${stats.inserted} details=${stats.details} output=${stats.items.length}`
+        );
+        if (db && runId) {
+          await finishCollectRun(runId, {
+            page_count: stats.pageCount,
+            fetched_cnt: stats.fetched,
+            inserted_cnt: stats.inserted,
+            detail_ok_cnt: stats.detailOk,
+            status: 'success',
+          });
+        }
+      } catch (err) {
+        if (db && runId) {
+          await finishCollectRun(runId, { status: 'failed', error: err.message });
+        }
+        console.error(`[collect] ${cat.code} ${date} failed: ${err.message}`);
+        results.push({ category: cat.code, type: cat.type, date, error: err.message });
       }
-    } catch (err) {
-      if (db && runId) {
-        await finishCollectRun(runId, { status: 'failed', error: err.message });
-      }
-      console.error(`[collect] ${cat.code} failed: ${err.message}`);
-      results.push({ category: cat.code, type: cat.type, error: err.message });
     }
   }
-  return { date, results };
+  return { date: dates[dates.length - 1], dates, results };
 }
 
 export async function saveResults(result) {

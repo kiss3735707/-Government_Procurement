@@ -29,5 +29,19 @@ describe('renderDigest', () => {
     assert.match(text, /一、新增采购意向（1 条）/);
     assert.match(text, /设备/);
     assert.match(text, /内部资料，请勿外传/);
+    assert.equal(text.includes('昨日补入'), false);
+  });
+
+  it('adds a catch-up section for items published after the previous digest', () => {
+    const { text } = renderDigest({
+      date: '2026-10-12',
+      name: '赵海东',
+      regions: ['嘉定区'],
+      items: [],
+      catchup: [{ type: 'award', title: '昨晚中标', award_amount: 10000, supplier: '甲公司' }],
+    });
+    assert.match(text, /一、新增采购意向（0 条）/);
+    assert.match(text, /四、昨日补入（1 条）/);
+    assert.match(text, /昨晚中标/);
   });
 });

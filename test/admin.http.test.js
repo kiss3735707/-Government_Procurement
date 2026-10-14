@@ -26,6 +26,11 @@ describe('admin http auth', () => {
     await new Promise((resolve) => server.close(resolve));
   });
 
+  it('returns 401 for /api/llm/settings without cookie', async () => {
+    const r = await fetch(`http://127.0.0.1:${port}/api/llm/settings`);
+    assert.equal(r.status, 401);
+  });
+
   it('returns 401 for /api/sales without cookie', async () => {
     const r = await fetch(`http://127.0.0.1:${port}/api/sales`);
     assert.equal(r.status, 401);

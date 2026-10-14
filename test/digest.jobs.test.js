@@ -73,4 +73,19 @@ describe('buildDigestJobs', () => {
       ['a@qq.com', 'b@qq.com']
     );
   });
+
+  it('includes yesterday catch-up in the next mail and still sends when today is empty', () => {
+    const jobs = buildDigestJobs({
+      date: '2026-10-12',
+      announcements: [],
+      catchup: [{ type: 'award', title: '昨晚中标', district_name: '嘉定区' }],
+      salesRows: [{ sales_name: '赵海东', sales_email: 'a@qq.com', region: '嘉定区', is_active: true }],
+      adminEmail: 'admin@example.com',
+    });
+    const sales = jobs.find((j) => j.kind === 'sales');
+    assert.equal(sales.skipEmpty, false);
+    assert.equal(sales.award, 1);
+    assert.match(sales.mail.text, /四、昨日补入（1 条）/);
+    assert.match(sales.mail.text, /昨晚中标/);
+  });
 });

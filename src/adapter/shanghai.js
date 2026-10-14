@@ -6,6 +6,7 @@
  */
 import { getJson, postJson } from '../http.js';
 import { SITE, POLITENESS } from '../config.js';
+import { buildCategoryBody } from './categoryBody.js';
 
 let siteIdCache = null;
 
@@ -19,17 +20,19 @@ async function getSiteId() {
 /**
  * 抓取一个栏目的一页公告列表。
  * @param {string} categoryCode 栏目编码
- * @param {object} opts { pageNo, pageSize, beginDate, endDate }
+ * @param {object} opts { pageNo, pageSize, beginDate, endDate, publishDateBegin, publishDateEnd }
  */
-export async function fetchCategoryPage(categoryCode, { pageNo = 1, pageSize = POLITENESS.pageSize, beginDate, endDate } = {}) {
-  const body = {
+export async function fetchCategoryPage(categoryCode, { pageNo = 1, pageSize = POLITENESS.pageSize, beginDate, endDate, publishDateBegin, publishDateEnd } = {}) {
+  const body = buildCategoryBody({
     parentId: SITE.parentId,
     categoryCode,
     pageNo,
     pageSize,
-  };
-  if (beginDate) body.beginDate = beginDate;
-  if (endDate) body.endDate = endDate;
+    beginDate,
+    endDate,
+    publishDateBegin,
+    publishDateEnd,
+  });
   const d = await postJson(`${SITE.baseUrl}/portal/category`, body);
   const data = d?.result?.data;
   if (!data) return { total: 0, items: [] };

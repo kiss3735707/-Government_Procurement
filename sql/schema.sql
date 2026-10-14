@@ -172,3 +172,41 @@ DROP TRIGGER IF EXISTS trg_sales_regions_updated ON sales_regions;
 CREATE TRIGGER trg_sales_regions_updated
 BEFORE UPDATE ON sales_regions
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- 二期 T2：大模型连接。仅一行。密钥不进 git。
+CREATE TABLE IF NOT EXISTS llm_settings (
+  id         INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  base_url   TEXT NOT NULL DEFAULT '',
+  api_key    TEXT NOT NULL DEFAULT '',
+  model      TEXT NOT NULL DEFAULT 'DeepSeek-V4-Flash-0731-w8a8',
+  reasoning  TEXT NOT NULL DEFAULT 'off',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INSERT INTO llm_settings (id)
+VALUES (1)
+ON CONFLICT (id) DO NOTHING;
+
+-- 二期 T3：中标 AI 结果。不写 announcements.tags。
+CREATE TABLE IF NOT EXISTS announcement_ai (
+  id              BIGSERIAL PRIMARY KEY,
+  announcement_id BIGINT NOT NULL UNIQUE REFERENCES announcements(id) ON DELETE CASCADE,
+  payload         JSONB,
+  status          TEXT NOT NULL DEFAULT 'pending',
+  model           TEXT,
+  error           TEXT,
+  tagged_at       TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS award_packages (
+  id              BIGSERIAL PRIMARY KEY,
+  announcement_id BIGINT NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+  item_index      INT,
+  item_name       TEXT,
+  supplier_name   TEXT,
+  deal_amount     NUMERIC(18,2),
+  industry        TEXT,
+  content_tags    JSONB NOT NULL DEFAULT '[]'
+);
+
+CREATE INDEX IF NOT EXISTS idx_award_pkg_ann ON award_packages (announcement_id);

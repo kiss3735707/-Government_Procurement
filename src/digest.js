@@ -18,6 +18,7 @@ import {
   importSalesRows,
   loadActiveSales,
   loadAnnouncementsForDay,
+  loadCatchupAnnouncements,
   markDigest,
 } from './digest/store.js';
 
@@ -59,13 +60,15 @@ if (!databaseUrl()) {
     } else if (opts.cmd === 'run') {
       const date = opts.date || todayShanghai();
       const cfg = smtpConfig();
-      const [sales, announcements] = await Promise.all([
+      const [sales, announcements, catchup] = await Promise.all([
         loadActiveSales(),
         loadAnnouncementsForDay(date),
+        loadCatchupAnnouncements(date),
       ]);
       const jobs = buildDigestJobs({
         date,
         announcements,
+        catchup,
         salesRows: sales,
         adminEmail: cfg.adminEmail,
       });

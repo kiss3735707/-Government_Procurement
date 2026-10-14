@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { inPublishWindow, shanghaiDayBounds, todayShanghai } from '../src/window.js';
+import { inPublishWindow, previousShanghaiDay, resolveCollectDates, shanghaiDayBounds, todayShanghai } from '../src/window.js';
 
 describe('shanghaiDayBounds', () => {
   it('cuts a Shanghai calendar day in UTC milliseconds', () => {
@@ -30,5 +30,16 @@ describe('inPublishWindow', () => {
 describe('todayShanghai', () => {
   it('returns YYYY-MM-DD', () => {
     assert.match(todayShanghai(), /^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('resolveCollectDates', () => {
+  it('collects yesterday then today when no date is given', () => {
+    assert.equal(previousShanghaiDay('2026-03-01'), '2026-02-28');
+    assert.deepEqual(resolveCollectDates({}, '2026-10-12'), ['2026-10-11', '2026-10-12']);
+  });
+
+  it('keeps an explicit date as a single day', () => {
+    assert.deepEqual(resolveCollectDates({ date: '2024-01-01' }, '2026-10-12'), ['2024-01-01']);
   });
 });

@@ -27,3 +27,18 @@ export function inPublishWindow(publishDate, dayStart, dayEnd) {
   if (publishDate == null) return false;
   return publishDate >= dayStart && publishDate < dayEnd;
 }
+
+/** 上海自然日的前一天。 */
+export function previousShanghaiDay(ymd = todayShanghai()) {
+  const prev = new Date(`${ymd}T00:00:00+08:00`).getTime() - 24 * 3600 * 1000;
+  return new Date(prev).toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
+}
+
+/**
+ * 每日定时采集的日期。未指定 --date 时先昨天、再今天。
+ * 指定 --date 时只采那一天（手工补采）。
+ */
+export function resolveCollectDates({ date } = {}, today = todayShanghai()) {
+  if (date) return [date];
+  return [previousShanghaiDay(today), today];
+}

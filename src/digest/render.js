@@ -43,7 +43,26 @@ function listAward(items) {
     .join('\n');
 }
 
-export function renderDigest({ date, name, regions, items, unassigned = false, citywide = false }) {
+function typedBlock(label, body) {
+  if (!body || body === '  （无）') return '';
+  return `${label}\n${body}`;
+}
+
+function catchupSection(items) {
+  if (!items?.length) return '';
+  const blocks = [
+    typedBlock('采购意向', listIntention(items)),
+    typedBlock('招标', listBidding(items)),
+    typedBlock('中标', listAward(items)),
+  ].filter(Boolean);
+  return `
+四、昨日补入（${items.length} 条）—— 前一日 17:00 后发布
+${blocks.join('\n')}
+
+`;
+}
+
+export function renderDigest({ date, name, regions, items = [], catchup = [], unassigned = false, citywide = false }) {
   const who = citywide
     ? `${name}（全市）`
     : unassigned
@@ -63,8 +82,8 @@ ${listBidding(items)}
 
 三、中标（成交）结果（${nA} 条）—— 竞争情报
 ${listAward(items)}
-
-【数据说明】来源：上海市政府采购网 | 采集：每日17:00 | 内部资料，请勿外传
+${catchupSection(catchup)}
+【数据说明】来源：上海市政府采购网 | 采集：每日17:00（含前一日补齐） | 内部资料，请勿外传
 `;
   return { subject, text };
 }

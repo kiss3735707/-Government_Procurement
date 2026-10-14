@@ -18,7 +18,10 @@ import {
 } from './salesRepo.js';
 import { addTag, removeTag } from './tagRepo.js';
 import { getAnnouncement, searchAnnouncementsAdmin } from './announceRepo.js';
-import { announcementsPage, loginPage, salesPage } from './ui.js';
+import { announcementsPage, llmPage, loginPage, salesPage } from './ui.js';
+import { getLlmSettings, publicLlmSettings, saveLlmSettings } from './llmRepo.js';
+import { normalizeLlmInput } from '../llm/settings.js';
+import { testLlmConnection } from '../llm/client.js';
 import { SALES_CSV_TEMPLATE } from '../digest/csv.js';
 import { SALES_REGION_OPTIONS } from './validate.js';
 
@@ -99,6 +102,7 @@ export async function handleAdmin(req, res, deps) {
   }
   if (path === '/' || path === '/sales') return sendHtml(res, 200, salesPage(user));
   if (path === '/announcements') return sendHtml(res, 200, announcementsPage(user));
+  if (path === '/llm') return sendHtml(res, 200, llmPage(user));
   return sendHtml(res, 404, '<!doctype html><p>页面不存在 <a href="/sales">返回</a></p>');
 }
 
@@ -179,6 +183,31 @@ async function handleApi(req, res, { pool, user, url, path, method }) {
     const out = await removeTag(pool, Number(rm[1]), Number(rm[2]));
     if (out.error) return sendJson(res, out.status || 400, { error: out.error });
     return sendJson(res, 200, { ok: true });
+  }
+  if (path === '/api/llm/settings' && method === 'GET') {
+    const row = await getLlmSettings(pool);
+    return sendJson(res, 200, publicLlmSettings(row));
+  }
+  if (path === '/api/llm/settings' && method === 'PUT') {
+    const body = JSON.parse((await readBody(req)) || '{}');
+    try {
+      const saved = await saveLlmSettings(pool, body);
+      return sendJson(res, 200, publicLlmSettings(saved));
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+  }
+  if (path === '/api/llm/test' && method === 'POST') {
+    const body = JSON.parse((await readBody(req)) || '{}');
+    const existing = await getLlmSettings(pool);
+    let settings;
+    try {
+      settings = normalizeLlmInput(body, existing);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+    const out = await testLlmConnection(settings);
+    return sendJson(res, 200, { ok: out.ok, message: out.message });
   }
   return sendJson(res, 404, { error: '接口不存在' });
 }
