@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildAwardTagPrompt, packagesFromPayload, parseModelJson } from '../src/llm/tagAward.js';
+import { TAG_MAX_TOKENS, completeChat } from '../src/llm/tagRun.js';
 
 describe('award tag parse', () => {
   it('reads fenced JSON and builds one package row per result item', () => {
@@ -21,5 +22,25 @@ describe('award tag parse', () => {
     const prompt = buildAwardTagPrompt({ title: '示例中标公告', content_text: '成交金额 100 元' });
     assert.match(prompt, /示例中标公告/);
     assert.match(prompt, /result_items/);
+  });
+});
+
+describe('award tag output limit', () => {
+  it('asks for 8000 completion tokens and stays far under the 500k context', async () => {
+    assert.equal(TAG_MAX_TOKENS, 8000);
+    assert.ok(TAG_MAX_TOKENS < 50000);
+    let body;
+    const text = await completeChat(
+      { baseUrl: 'http://gw/v1', apiKey: 'k', model: 'm', reasoning: 'off' },
+      'prompt',
+      {
+        fetchImpl: async (_url, opts) => {
+          body = JSON.parse(opts.body);
+          return { ok: true, text: async () => '{"choices":[{"message":{"content":"{}"}}]}' };
+        },
+      }
+    );
+    assert.equal(body.max_tokens, 8000);
+    assert.equal(text, '{}');
   });
 });

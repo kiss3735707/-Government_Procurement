@@ -26,6 +26,8 @@ describe('deploy units', () => {
     assert.match(service, /ExecStart=\/usr\/bin\/env node \/opt\/zfcg\/src\/tag-awards\.js --today\s*$/m);
     assert.equal(service.includes('digest.js'), false);
     assert.match(digest, /ExecStart=\/usr\/bin\/env node \/opt\/zfcg\/src\/digest\.js run --send/);
+    const install = readFileSync(resolve(root, 'install.sh'), 'utf8');
+    assert.match(install, /zfcg-collect\.timer zfcg-digest\.timer zfcg-backup\.timer zfcg-tag-daily\.timer/);
   });
 
   it('keeps backups 30 days and dumps via pg_dump', () => {

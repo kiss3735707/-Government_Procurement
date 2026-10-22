@@ -5,13 +5,16 @@ import { getLlmSettings } from '../admin/llmRepo.js';
 import { chatCompletionsUrl } from './settings.js';
 import { buildAwardTagPrompt, messageText, packagesFromPayload, parseModelJson } from './tagAward.js';
 
+/** 单次生成上限。模型上下文是 50 万 token，这里只放宽写完 JSON 所需的长度。 */
+export const TAG_MAX_TOKENS = 8000;
+
 export async function completeChat(settings, prompt, { fetchImpl = fetch, timeoutMs = 180000 } = {}) {
   const url = chatCompletionsUrl(settings.baseUrl);
   const body = {
     model: settings.model,
     messages: [{ role: 'user', content: prompt }],
     temperature: 0,
-    max_tokens: 2000,
+    max_tokens: TAG_MAX_TOKENS,
     reasoning_effort: settings.reasoning === 'on' ? 'low' : 'none',
   };
   const ctrl = new AbortController();

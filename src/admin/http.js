@@ -24,6 +24,7 @@ import { normalizeLlmInput } from '../llm/settings.js';
 import { testLlmConnection } from '../llm/client.js';
 import { SALES_CSV_TEMPLATE } from '../digest/csv.js';
 import { SALES_REGION_OPTIONS } from './validate.js';
+import { handleAgent } from '../agent/http.js';
 
 const MAX_BODY = 2 * 1024 * 1024;
 
@@ -63,10 +64,15 @@ function currentUser(req, auth) {
 }
 
 export async function handleAdmin(req, res, deps) {
-  const { pool, auth } = deps;
+  const { pool, auth, agentToken } = deps;
   const url = new URL(req.url || '/', 'http://local');
   const path = url.pathname;
   const method = (req.method || 'GET').toUpperCase();
+
+  if (path.startsWith('/api/agent')) {
+    return handleAgent(req, res, { pool, token: agentToken || '', sendJson });
+  }
+
   const user = currentUser(req, auth);
 
   if (path === '/login' && method === 'GET') {
@@ -215,8 +221,9 @@ async function handleApi(req, res, { pool, user, url, path, method }) {
 export function createAdminServer(opts = {}) {
   const pool = opts.pool || getPool();
   const auth = opts.auth || adminAuthConfig();
+  const agentToken = opts.agentToken ?? process.env.AGENT_TOKEN ?? '';
   return http.createServer((req, res) => {
-    handleAdmin(req, res, { pool, auth }).catch((err) => {
+    handleAdmin(req, res, { pool, auth, agentToken }).catch((err) => {
       if (!res.headersSent) sendJson(res, 500, { error: err.message || String(err) });
     });
   });

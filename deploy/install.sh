@@ -18,11 +18,13 @@ install -m 644 "$APP/deploy/zfcg-digest.service" /etc/systemd/system/
 install -m 644 "$APP/deploy/zfcg-digest.timer" /etc/systemd/system/
 install -m 644 "$APP/deploy/zfcg-backup.service" /etc/systemd/system/
 install -m 644 "$APP/deploy/zfcg-backup.timer" /etc/systemd/system/
+install -m 644 "$APP/deploy/zfcg-tag-daily.service" /etc/systemd/system/
+install -m 644 "$APP/deploy/zfcg-tag-daily.timer" /etc/systemd/system/
 install -m 644 "$APP/deploy/zfcg-notify@.service" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now zfcg-admin.service
 systemctl restart zfcg-admin.service
-systemctl enable --now zfcg-collect.timer zfcg-digest.timer zfcg-backup.timer
+systemctl enable --now zfcg-collect.timer zfcg-digest.timer zfcg-backup.timer zfcg-tag-daily.timer
 if command -v ufw >/dev/null; then
   ufw status | grep -q inactive || ufw allow 8080/tcp || true
 fi

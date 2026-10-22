@@ -21,7 +21,7 @@ import { addShanghaiDay } from './src/backfill/plan.js';
 
 const to = '2026-10-12';
 let y = 2024;
-let m = 2;
+let m = 1;
 while (true) {
   const start = `${y}-${String(m).padStart(2, '0')}-01`;
   if (start > to) break;
