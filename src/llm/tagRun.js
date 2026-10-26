@@ -4,17 +4,18 @@
 import { getLlmSettings } from '../admin/llmRepo.js';
 import { chatCompletionsUrl } from './settings.js';
 import { buildAwardTagPrompt, messageText, packagesFromPayload, parseModelJson } from './tagAward.js';
+import { assertMainIndustry } from './industries.js';
 
 /** 单次生成上限。模型上下文是 50 万 token，这里只放宽写完 JSON 所需的长度。 */
 export const TAG_MAX_TOKENS = 8000;
 
-export async function completeChat(settings, prompt, { fetchImpl = fetch, timeoutMs = 180000 } = {}) {
+export async function completeChat(settings, prompt, { fetchImpl = fetch, timeoutMs = 180000, maxTokens = TAG_MAX_TOKENS } = {}) {
   const url = chatCompletionsUrl(settings.baseUrl);
   const body = {
     model: settings.model,
     messages: [{ role: 'user', content: prompt }],
     temperature: 0,
-    max_tokens: TAG_MAX_TOKENS,
+    max_tokens: maxTokens,
     reasoning_effort: settings.reasoning === 'on' ? 'low' : 'none',
   };
   const ctrl = new AbortController();
@@ -138,6 +139,7 @@ export async function tagAwardRows(pool, rows, { fetchImpl, concurrency = TAG_CO
       const prompt = buildAwardTagPrompt(row);
       const text = await completeChat(settings, prompt, { fetchImpl });
       const payload = parseModelJson(text);
+      assertMainIndustry(payload?.industry?.main_industry);
       const packageCount = await saveSuccess(pool, row.id, settings.model, payload);
       console.log(`tagged ${row.id} packages=${packageCount} ${row.title}`);
       return { id: row.id, status: 'done', packageCount };

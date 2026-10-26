@@ -22,6 +22,8 @@ describe('award tag parse', () => {
     const prompt = buildAwardTagPrompt({ title: '示例中标公告', content_text: '成交金额 100 元' });
     assert.match(prompt, /示例中标公告/);
     assert.match(prompt, /result_items/);
+    assert.match(prompt, /信息化数字化/);
+    assert.match(prompt, /主行业不要写「未明确」/);
   });
 });
 
